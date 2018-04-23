@@ -24,12 +24,12 @@ cl_retval cl_calc_public_key(struct cl_pc_key * sk, struct cl_gen_key * pk, char
 		}
 
 		for (i = 0; i < sk->params->N0; ++i) {
-			// g0 = g . h_1^T
+			uint8_t blk = (sk->params->N0 + i - 1) % sk->params->N0;
 			for (j = 0; j < sk->params->M; ++j) {
 				// If this bit is set in g
 				if ( (g[(j / 8)] & (1 << (j % 8))) ) {
 					// Every set bit of private key in relevant subblock
-					for (k = (sk->params->N0 - i - 1) * sk->params->w0; k < (sk->params->N0 - i) * sk->params->w0; ++k) {
+					for (k = blk * sk->params->w0; k < (blk + 1) * sk->params->w0; ++k) {
 						// Rotate it to get correct position in circulant matrix		
 						rotated_index = ((N - sk->key[k] + j ) % sk->params->M);
 						// And add it to the public key.		

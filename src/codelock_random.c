@@ -116,15 +116,13 @@ cl_retval cl_rand_pc_key(struct cl_pc_key * key) {
 			while (!success) {
 				key->key[i * key->params->w0 + j] = cl_get_random(i * key->params->M, (i + 1) * key->params->M - 1);
 				uint32_t k;
-				char unique = 1;
+				success = 1;
 				for (k = 0; k < j; ++k) {
 					if (key->key[i * key->params->w0 + k] == key->key[i * key->params->w0 + j]) {
-						unique = 0;
+						success = 0;
 						break;
 					}
 				}
-				if (unique)
-					success = 1;
 			}
 		}
 	}

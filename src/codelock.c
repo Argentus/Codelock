@@ -9,15 +9,13 @@ cl_retval cl_encode_block(uint8_t * in, uint8_t * gm_block, uint16_t blklen, uin
 
 	uint32_t i, j;
 
-	// Multiply by generator matrix	
-	if (in[0] & ((uint8_t) 1))
-		for (i = 0; i < blkbytes; ++i)
-			out[j] = gm_block[j];
-	else
-		for (i = 0; i < blkbytes; ++i)
-			out[i] = 0;
-	
-	for (i = 1; i < blklen; i++) {
+	for (i = 0; i < blklen; i++) {
+
+		if ( in[(i / 8)] & (1 << (i % 8)) )
+			for (j = 0; j < blkbytes; ++j) {
+				out[j] ^= gm_block[j];
+			}
+
 		// 1 bit rotation of GM block
 		uint8_t tmp1 = gm_block[blkbytes - 1] >> (odd_bits + 7)%8;
 		uint8_t tmp2;
@@ -28,23 +26,7 @@ cl_retval cl_encode_block(uint8_t * in, uint8_t * gm_block, uint16_t blklen, uin
 			tmp1 = tmp2;
 		}
 		gm_block[blkbytes - 1] &= 0xFF >> padding_bits;
-
-		if ( in[(i / 8)] & (1 << (i % 8)) )
-			for (j = 0; j < blkbytes; ++j) {
-				out[j] ^= gm_block[j];
-			}
 	}
-	
-	// Rotation of GM block back to original
-	uint8_t tmp1 = gm_block[blkbytes - 1] >> (odd_bits + 7)%8;
-	uint8_t tmp2;
-	for (j = 0; j < blkbytes; ++j) {		
-		tmp1 |= gm_block[j]<<1;
-		tmp2 = gm_block[j]>>7;
-		gm_block[j] = tmp1;
-		tmp1 = tmp2;
-	}
-	gm_block[blkbytes - 1] &= 0xFF >> padding_bits;
 
 	return CL_OK;
 }
@@ -76,10 +58,17 @@ cl_retval cl_encode(uint8_t ** in, struct cl_gen_key * gen, uint8_t * out) {
 		}
 	} else {
 		// Key without identity (BIKE-1 style)
-		for (i = 0; i < gen->params->N0; ++i) {
+		for (i = 0; i < gen->params->N0 - 1; ++i) {
 			for (j = 0; j < blkbytes; ++j)
 				out[i * blkbytes + j] = 0x00;
-			cl_retval err = cl_encode_block(in[0], gen->key + i * blkbytes, gen->params->M, out + i * blkbytes);
+			cl_retval err = cl_encode_block(in[i], gen->key, gen->params->M, out + i * blkbytes);
+			if (err != CL_OK)
+				return err;
+		}
+		for (j = 0; j < blkbytes; ++j)
+			out[(gen->params->N0 - 1) * blkbytes + j] = 0x00;
+		for (i = 0; i < gen->params->N0 - 1; ++i) {
+			cl_retval err = cl_encode_block(in[i], gen->key + (i + 1) * blkbytes, gen->params->M, out + (gen->params->N0 - 1) * blkbytes);
 			if (err != CL_OK)
 				return err;
 		}

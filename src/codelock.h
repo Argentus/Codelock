@@ -65,7 +65,8 @@ cl_retval cl_calc_syndrome(uint8_t * codeword, struct cl_pc_key * key, uint8_t *
 uint16_t cl_count_upc(uint8_t * syndrome, struct cl_pc_key * key, uint16_t index);
 //
 // 1.3.1 Decoding algorithms
-cl_retval cl_decoder_BF1(uint8_t * syndrome, struct cl_pc_key * key, uint8_t * out);
+cl_retval cl_decoder_BF_fpt(uint8_t * syndrome, struct cl_pc_key * key, uint8_t * out_errv, void * params);
+cl_retval cl_decoder_BF_dmt(uint8_t * syndrome, struct cl_pc_key * key, uint8_t * out_errv, void * params);
 //
 // 1.4 Helper functions
 //
