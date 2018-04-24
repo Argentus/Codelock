@@ -6,11 +6,14 @@
 int main(int argc, char ** args) {
 	
 	int n_errs;
+	int threshold;
+
 	// read params
-	if (argc < 2) {
-		n_errs = 84;	
+	if (argc < 3) {
+		return -1;	
 	} else {
 		sscanf(args[1], "%i", &n_errs);
+		sscanf(args[2], "%i", &threshold);
 	}
 	int i, j, k;
 
@@ -30,14 +33,14 @@ int main(int argc, char ** args) {
 	struct cl_errorvector errv = new_cl_errorvector(&param1);
 	uint8_t * syndrome = malloc(blkbytes);
 	uint8_t * found_err = malloc(param1.N0 * blkbytes);
-	uint8_t decoder_params[] = {5, 23, 23, 23, 23, 23};
+	uint8_t decoder_params[] = {5, threshold, threshold - 1, threshold - 2, threshold - 3, threshold - 4};
 
-	const int key_cycle_len = 100;
-	const int n_key_cycles = 10;
+	const int key_cycle_len = 25;
+	const int n_key_cycles = 20;
 
 	int fails = 0;
 
-	fprintf(stderr, "t = %3i:   0%c", param1.t, '%');
+	fprintf(stderr, "t = %3i, thresh = %2i:   0%c", param1.t, threshold, '%');
 	for (int key = 0; key < n_key_cycles; ++key) {
 		cl_keygen(&param1, &sk, &pk, 0);
 		for (j = 0; j < key_cycle_len; ++j) {
@@ -57,8 +60,8 @@ int main(int argc, char ** args) {
 		fprintf(stderr, "\b\b\b\b%3i%c", (key + 1) * 100 / n_key_cycles, '%');
 	}
 
-	printf("%i, %i, %i, %i, %i, %i\n", param1.M, param1.N0, param1.w0, param1.t, key_cycle_len * n_key_cycles, fails);
 	fprintf(stderr, "\b\b\b\b%i fail / %i total\n", fails, key_cycle_len * n_key_cycles);
+	printf("%i, %i, %i, %i, %i, 1, %i, %i\n", param1.M, param1.N0, param1.w0, param1.t, threshold, key_cycle_len * n_key_cycles, fails);
 
 	return 0;
 }
